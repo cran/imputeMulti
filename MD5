@@ -1,4 +1,4 @@
-1bca3da0d05d2b3e26d4c0a86313db68 *DESCRIPTION
+f991d99f6a787c6a67dce9c352f79e60 *DESCRIPTION
 3c825f0ad7d99966fd3a7693a06c52d7 *NAMESPACE
 8d791737b1890cfc071350192045768b *R/RcppExports.R
 ec686eeb1384fe8d6e5babc754db372f *R/class_imputeMulti.R
@@ -7,8 +7,8 @@ d5ff5b7fb1021e1ff01c6268098b820a *R/data_dep_prior_multi.R
 0216b41826a023062e43bd942ec9754f *R/int-count_levels.R
 2a716bd6bb465ede8dd9b66a70906edf *R/int-impute_multinomial.R
 d02898bbe95e128dddbf0ad5a495d8b3 *R/int-splitRows.R
-b4145b12e2470e4000df1fa43964e0a3 *R/multinomial_data_aug.R
-845a3cfa36f18b21d84888dc8a0cba06 *R/multinomial_em.R
+1c2e246b606ac0c0155e9d89246a3042 *R/multinomial_data_aug.R
+e09c7c3b4a6083361823b2350dce755b *R/multinomial_em.R
 c2edbd173c1b879a99c5261d60de6b3c *R/multinomial_impute.R
 ef923e4050f2315f84ce38cf4b9baf83 *R/multinomial_stats.R
 64594de3cab7f1b3525a68617e78195b *data/tract2221.rda
@@ -17,8 +17,8 @@ ef923e4050f2315f84ce38cf4b9baf83 *R/multinomial_stats.R
 375ded2d5118593183146e5f05375087 *man/is.imputeMulti.Rd
 127a3b54af08bf145f79f1a270796850 *man/is.mod_imputeMulti.Rd
 74b0939c44fd93a2896d569ee3befa12 *man/mod_imputeMulti-class.Rd
-185c7b292279e05dd24e2faba6c8b859 *man/multinomial_data_aug.Rd
-1124d391bd86315353abaa924c19f757 *man/multinomial_em.Rd
+b9ee4a7d2e0ea7497c88664a340f2c45 *man/multinomial_data_aug.Rd
+dabf587d7d9d1d8fb283882267cf4dba *man/multinomial_em.Rd
 1b95c5cd79ddfbcdfe16d46ef257bdaa *man/multinomial_impute.Rd
 33ae7bb6c5084930fff7cbfea8c4cd02 *man/multinomial_stats.Rd
 62e0c7f33ff3167f16f8c8e4ad0a041b *man/summary-imputeMulti-method.Rd
@@ -26,7 +26,7 @@ ef923e4050f2315f84ce38cf4b9baf83 *R/multinomial_stats.R
 aa3f253c7f7db706535204ba7fa3585f *man/tract2221.Rd
 161fe384faf8ad05f7630faad3543e35 *src/RcppExports.cpp
 6d2c299197baa1485f28660f01626aa0 *src/count_compare.cpp
-7b405484b057623d4652086c1a65863c *src/utilities_rcpp.cpp
+d46d96c7afb85303f801355da4335567 *src/utilities_rcpp.cpp
 d28bb1f4345fe1cdb3bc5299073f4294 *tests/testthat.R
 23bfe03e00dd46332e3e7d7bbd0b1a47 *tests/testthat/test-classes.R
 659bb9437764c77b4ea9dd438e2da980 *tests/testthat/test-count_levels.R
