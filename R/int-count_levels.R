@@ -14,6 +14,12 @@ fact_to_int <- function(f) {
     ifelse(is.na(i), NA, which(i == l))})))
 }
 
+# function to get the character mapping from a factor type
+get_level_text <- function(var, val) {
+  lvls <- levels(var)
+  return(lvls[val])
+}
+
 #### internal
 # @title Count Levels
 # @description Given a dataset and a data.frame of comparison patterns,
@@ -25,11 +31,11 @@ fact_to_int <- function(f) {
   # \code{"no"} - there are no missing values, count observed patterns
   # \code{"count.obs"} - there are missing values, count the marginally observed patterns
   # \code{"count.miss"} - there are missing values, count the full observed-and-missing patterns
-# @param parallel Logical. Do you wish to parallelize the code? Defaults to \code{TRUE}
+# @param parallel Logical. Do you wish to parallelize the code? Defaults to \code{FALSE}
 # @param leave_cores How many cores do you wish to leave open to other processing?
 #
 count_levels <- function(dat, enum_list, hasNA= c("no", "count.obs", "count.miss"),
-                         parallel= TRUE, leave_cores= 1L) {
+                         parallel= FALSE, leave_cores= 1L) {
   # parameter checking
   hasNA <- match.arg(hasNA, several.ok= FALSE)
   if (parallel == TRUE) {
@@ -86,4 +92,3 @@ marg_complete_compare <- function(marg, complete, marg_to_complete= FALSE) {
   .Call('imputeMulti_marg_comp_compare', PACKAGE = 'imputeMulti',
         marg, complete, marg_to_complete)
 }
-
