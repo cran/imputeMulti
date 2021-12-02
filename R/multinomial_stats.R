@@ -1,7 +1,7 @@
 
 #' @title Multinomial Sufficient Statistics
-#' @description Calculate observed-data sufficient statistics, marginally-observed summary statistics,
-#' or enumerate all possible observed patterns from a multivariate multinomial dataset. 
+#' @description Calculate observed-data sufficient statistics, marginally-observed summary 
+#' statistics or enumerate all possible observed patterns from a multivariate multinomial dataset. 
 #' @param dat A \code{data.frame}. All variables must be factors.
 #' @param output A string specifying the desired output. One of \code{c("x_y", "z_Os_y", "possible.obs")}.
 #' \code{"x_y"} indicates the observed-data sufficient statistics, \code{"z_Os_y"} indicates the
@@ -20,10 +20,8 @@ multinomial_stats <- function(dat, output= c("x_y", "z_Os_y", "possible.obs")) {
   #----------------------------------------------
   output <- match.arg(output, several.ok= FALSE)
   
-  if (!all(apply(dat, 2, is.factor))) {
-    # enforce factor variables
-    dat <- data.frame(apply(dat, 2, function(x) as.factor(x)))
-  }
+  data.table::setDT(dat)
+  if (!all(unlist(lapply(dat, is.factor)))) {dat <- dat[, lapply(.SD, as.factor)]}
   
   # 01. build empty contingency table
   #----------------------------------------------
@@ -33,9 +31,10 @@ multinomial_stats <- function(dat, output= c("x_y", "z_Os_y", "possible.obs")) {
     enum <- expand.grid(sapply(dat, function(x) return(c(levels(x), NA))))
     enum_comp <- enum[stats::complete.cases(enum),] 
     enum_miss <- enum[!stats::complete.cases(enum),]
-    enum_miss <- enum_miss[apply(enum_miss, 1, function(x) !all(is.na(x))),] # not all missing
+    enum_miss <- enum_miss[apply(enum_miss, 1, function(x) !all(is.na(x))),] # exclude all missing
   }
-  rownames(enum_comp) <- 1:nrow(enum_comp) # y \in Y
+  #data.table::setDT(enum_comp)
+  #enum_comp[, rowid := .I] # y \in Y
   
   # 02. get counts / sufficient statistics
   # return outputs

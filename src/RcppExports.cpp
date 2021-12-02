@@ -7,7 +7,7 @@ using namespace Rcpp;
 
 // count_compare
 IntegerVector count_compare(IntegerMatrix& x, IntegerMatrix& dat, const std::string& hasNA);
-RcppExport SEXP imputeMulti_count_compare(SEXP xSEXP, SEXP datSEXP, SEXP hasNASEXP) {
+RcppExport SEXP _imputeMulti_count_compare(SEXP xSEXP, SEXP datSEXP, SEXP hasNASEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -20,7 +20,7 @@ END_RCPP
 }
 // supDistC
 double supDistC(const NumericVector& x, const NumericVector& y);
-RcppExport SEXP imputeMulti_supDistC(SEXP xSEXP, SEXP ySEXP) {
+RcppExport SEXP _imputeMulti_supDistC(SEXP xSEXP, SEXP ySEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -30,16 +30,27 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// marg_comp_compare
-List marg_comp_compare(IntegerMatrix& marg, IntegerMatrix& complete, const bool marg_to_complete);
-RcppExport SEXP imputeMulti_marg_comp_compare(SEXP margSEXP, SEXP completeSEXP, SEXP marg_to_completeSEXP) {
+// xy_compare
+List xy_compare(IntegerMatrix& mat_x, IntegerMatrix& mat_y);
+RcppExport SEXP _imputeMulti_xy_compare(SEXP mat_xSEXP, SEXP mat_ySEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< IntegerMatrix& >::type marg(margSEXP);
-    Rcpp::traits::input_parameter< IntegerMatrix& >::type complete(completeSEXP);
-    Rcpp::traits::input_parameter< const bool >::type marg_to_complete(marg_to_completeSEXP);
-    rcpp_result_gen = Rcpp::wrap(marg_comp_compare(marg, complete, marg_to_complete));
+    Rcpp::traits::input_parameter< IntegerMatrix& >::type mat_x(mat_xSEXP);
+    Rcpp::traits::input_parameter< IntegerMatrix& >::type mat_y(mat_ySEXP);
+    rcpp_result_gen = Rcpp::wrap(xy_compare(mat_x, mat_y));
     return rcpp_result_gen;
 END_RCPP
+}
+
+static const R_CallMethodDef CallEntries[] = {
+    {"_imputeMulti_count_compare", (DL_FUNC) &_imputeMulti_count_compare, 3},
+    {"_imputeMulti_supDistC", (DL_FUNC) &_imputeMulti_supDistC, 2},
+    {"_imputeMulti_xy_compare", (DL_FUNC) &_imputeMulti_xy_compare, 2},
+    {NULL, NULL, 0}
+};
+
+RcppExport void R_init_imputeMulti(DllInfo *dll) {
+    R_registerRoutines(dll, NULL, CallEntries, NULL, NULL);
+    R_useDynamicSymbols(dll, FALSE);
 }

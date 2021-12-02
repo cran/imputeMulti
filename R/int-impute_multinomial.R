@@ -9,22 +9,23 @@
 # @return A complete observation \eqn{X} (ie-without missing values).
 impute_multinomial <- function(miss_val, row_ind, MLEx_y) {
   ml_vals <- MLEx_y[row_ind,]
-  ml_vals <- ml_vals[ml_vals$theta_y == max(ml_vals$theta_y),]
+  ml_vals <- ml_vals[which.max(ml_vals$theta_y),]
   
+  miss_val <- data.frame(miss_val)
   if (nrow(ml_vals) == 1) {
-    miss_val[which(is.na(miss_val))] <- ml_vals[which(is.na(miss_val))]
+    miss_val[,which(is.na(miss_val))] <- ml_vals[which(is.na(miss_val))]
   } else {
-    imp <- ml_vals[sample(1:nrow(ml_vals), size= 1),]
+    imp <- ml_vals[sample.int(nrow(ml_vals), size= 1),]
     miss_val[which(is.na(miss_val))] <- imp[which(is.na(miss_val))]
   }
-  return(miss_val)
+  return(data.table::setDT(miss_val))
 }
 
 # this provides a wrapper to \code{\link{impute_multinomial}} above such 
 # that all missing values are imputed.
 impute_multinomial_all <- function(dat_miss, MLEx_y, p) {
   gc()
-  marg_ind <- marg_complete_compare(dat_miss, MLEx_y[, 1:p], marg_to_complete= TRUE)
+  marg_ind <- mx_my_compare(dat_miss, MLEx_y[, 1:p])
   
   for (i in 1:nrow(dat_miss)) {
     dat_miss[i,] <- impute_multinomial(dat_miss[i,], row_ind= marg_ind[[i]], MLEx_y= MLEx_y)

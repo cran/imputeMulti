@@ -1,17 +1,25 @@
 
+
 # [4/2016] Moving supDist wrapper to R -- for R CMD Check
 # wrapper to supDistC to move error checking outside of C++
 supDist <- function(x,y) {
   if (length(x) != length(y)) stop("Length of x and y differ.")
-  .Call('imputeMulti_supDistC', PACKAGE = 'imputeMulti', x, y)
+  supDistC(x,y)
 }
 
 # convert a factor-vector to an integer vector, where the integers correspond
 # to the levels of the factor.
 fact_to_int <- function(f) {
-  l <- levels(f)
-  return(unlist(sapply(f, function(i) {
-    ifelse(is.na(i), NA, which(i == l))})))
+  if (is.factor(f)) {
+    l <- levels(f)
+    return(unlist(
+      sapply(f, function(i) {
+        ifelse(!is.na(i), which(i == l), NA)
+      })
+    ))
+  } else {
+    return(f)
+  }
 }
 
 # function to get the character mapping from a factor type
@@ -20,10 +28,41 @@ get_level_text <- function(var, val) {
   return(lvls[val])
 }
 
+# @description Compare two two-dimensional arrays (\code{mat_x}, \code{mat_y}), where \code{mat_x}
+# permits missing values. Return a \code{list} of length \code{nrow(mat_x)} such that each list
+# element contains a vector of row indices from \code{mat_y} with row-equivalence of the non
+# missing values.
+# @param DT_x A \code{data.table} which may contain missing values
+# @param DT_y A \code{data.table} without missing values
+# @return A \code{list} of matches.
+mx_my_compare <- function(DT_x, DT_y) {
+  if (ncol(DT_x) != ncol(DT_y)) stop("ncol of DT_x and DT_y do not match.")
+  ## 0. Pre-processing: convert factors to integers
+  data.table::setDT(DT_x); data.table::setDT(DT_y)
+  res <- vector("list", length= nrow(DT_x))
+  join_cols <- names(DT_x)
+  DT_y[, rowid := .I]
+  
+  for (s in seq_len(nrow(DT_x))) {
+    tmp <- DT_x[s,]
+    na_idx <- which(apply(tmp, 1, is.na))
+    if (length(na_idx) > 0) {
+      res[[s]] <- DT_y[tmp, on= join_cols[-na_idx]]$rowid  
+    }
+    else {
+      res[[s]] <- DT_y[tmp, on= join_cols]$rowid
+    }
+  }
+  
+  DT_y[, rowid := NULL]
+  return(res)
+}
+
+
 #### internal
 # @title Count Levels
 # @description Given a dataset and a data.frame of comparison patterns,
-# count the number of occurances of each pattern.
+# count the number of occurrences of each pattern.
 # @param dat A \code{data.frame}. All variables must be factors
 # @param enum_list A \code{data.frame} consisting of all possible patterns for matching
 # with \code{dat}.
@@ -32,14 +71,15 @@ get_level_text <- function(var, val) {
   # \code{"count.obs"} - there are missing values, count the marginally observed patterns
   # \code{"count.miss"} - there are missing values, count the full observed-and-missing patterns
 # @param parallel Logical. Do you wish to parallelize the code? Defaults to \code{FALSE}
-# @param leave_cores How many cores do you wish to leave open to other processing?
+# @param cores How many cores do you wish to leave open to other processing?
 #
 count_levels <- function(dat, enum_list, hasNA= c("no", "count.obs", "count.miss"),
-                         parallel= FALSE, leave_cores= 1L) {
+                         parallel= FALSE, 
+                         cores = getOption("mc.cores", parallel::detectCores() - 1)) {
   # parameter checking
   hasNA <- match.arg(hasNA, several.ok= FALSE)
   if (parallel == TRUE) {
-    if (leave_cores < 0 | leave_cores %% 1 != 0) stop("leave_cores must be an integer >= 0")
+    if (cores < 0 || cores %% 1 != 0) stop("cores must be an integer >= 0")
   }
   if (ncol(dat) != ncol(enum_list)) stop("ncol(dat) and ncol(enum_list) must match.")
 
@@ -52,16 +92,13 @@ count_levels <- function(dat, enum_list, hasNA= c("no", "count.obs", "count.miss
     enum_list$counts <- count_compare(x= e2, dat= dat2, hasNA= hasNA)
   } else {
     # resolve edge case when nnodes > nrow(dat2)
-    nnodes <- min(nrow(dat2), parallel::detectCores() - leave_cores)
-    
-    if (grepl("Windows", utils::sessionInfo()$running)) {cl <- parallel::makeCluster(nnodes, type= "PSOCK")}
+    # setup cluster
+    nnodes <- min(nrow(dat2), cores)
+    if (.Platform$OS.type != "unix") {cl <- parallel::makeCluster(nnodes, type= "PSOCK")}
     else {cl <- parallel::makeCluster(nnodes, type= "FORK")}
+    parallel::clusterCall(cl, assign, "count_compare", count_compare, envir = .GlobalEnv)
     
-    # 8/9/2016 -- needed since clusterExport does not work with non exported functions
-    # See: http://stackoverflow.com/questions/38836341
-    count_compare <- imputeMulti:::count_compare 
-    parallel::clusterExport(cl, varlist= c("count_compare"), envir= 1)
-    
+    # run parallel count_compare() 
     temp <- do.call("cbind", parallel::clusterApply(cl,
           # split data across clusters, share: comparison (e2) and hasNA
           x= splitRows(dat2, nnodes), fun= function(x, e2, hasNA) {
@@ -74,26 +111,4 @@ count_levels <- function(dat, enum_list, hasNA= c("no", "count.obs", "count.miss
   }
   # return
   return(enum_list[!is.na(enum_list$counts) & enum_list$counts > 0,])
-}
-
-
-# @description Compare an array with missing values \code{marg} and an array
-# with complete values \code{complete}. Return matching indices. Can compare
-# either marginal-to-complete or complete-to-marginal.
-# @param marg A two dimensional array with missing values
-# @param complete A two dimensional array without missing values
-# @param marg_to_comp Logical. Do you wish to compare marginal values to
-# complete values/matches? Defaults to \code{FALSE} ie- complete values compared
-# to marginal matches.
-# @return A \code{list} of matches.
-marg_complete_compare <- function(marg, complete, marg_to_complete= FALSE) {
-  ## 0. Pre-processing: convert factors to integers
-  marg <- do.call("cbind", lapply(marg, fact_to_int))
-  complete <- do.call("cbind", lapply(complete, fact_to_int))
-  
-  if (ncol(marg) != ncol(complete)) stop("ncol of marg and complete do not match.")
-
-  ## 1. Run code in C
-  .Call('imputeMulti_marg_comp_compare', PACKAGE = 'imputeMulti',
-        marg, complete, marg_to_complete)
 }
